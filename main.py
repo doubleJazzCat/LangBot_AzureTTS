@@ -3,8 +3,8 @@ from pkg.plugin.events import *  # 导入事件类
 
 
 # 注册插件
-@register(name="Hello", description="hello world", version="0.1", author="RockChinQ")
-class MyPlugin(BasePlugin):
+@register(name="AzureTTS", description="AzureTTS service for LangBot", version="0.1", author="Ingnaryk")
+class AzureTTS(BasePlugin):
 
     # 插件加载时触发
     def __init__(self, host: APIHost):
