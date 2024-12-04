@@ -20,7 +20,7 @@ class AzureTTS(BasePlugin):
 
     # 插件加载时触发
     def __init__(self, host: APIHost):
-        asyncio.run_coroutine_threadsafe(self.initialize(), self.ap.event_loop)
+        asyncio.run_coroutine_threadsafe(self.initialize(), host.ap.event_loop)
 
     # 异步初始化
     async def initialize(self):
@@ -89,7 +89,7 @@ class AzureTTS(BasePlugin):
 
     async def _action(self, ctx: EventContext):
         msg = ctx.event.text_message
-        if m := self.keyword.match(msg):  # 如果符合关键字
+        if m := self.KEYWORD.match(msg):  # 如果符合关键字
             args = m.groupdict()
             character = args.get('speaker') or 'DEFAULT'
 
