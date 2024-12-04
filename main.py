@@ -20,7 +20,7 @@ class AzureTTS(BasePlugin):
 
     # 插件加载时触发
     def __init__(self, host: APIHost):
-        asyncio.run(self.initialize())
+        asyncio.run_coroutine_threadsafe(self.initialize(), self.ap.event_loop)
 
     # 异步初始化
     async def initialize(self):
