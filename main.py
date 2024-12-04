@@ -16,7 +16,7 @@ from pkg.plugin.context import register, handler, BasePlugin, APIHost, EventCont
 class AzureTTS(BasePlugin):
 
     KEYWORD = re.compile(
-        r"tts\s+(?:-(?P<character>\w+)\s+)?(?P<text>.+)", re.DOTALL)
+        r"#tts\s+(?:-(?P<character>\w+)\s+)?(?P<text>.+)", re.DOTALL)
 
     # 插件加载时触发
     def __init__(self, host: APIHost):
