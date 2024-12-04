@@ -74,7 +74,7 @@ class AzureTTS(BasePlugin):
         except urllib.error.HTTPError as he:
             self.ap.logger.error(f'AzureTTS服务调用异常，原因为{he}')
             return Plain("TTS坏掉了！")
-        return Voice(base64=base64.b64encode(response.content).decode())
+        return Voice(base64=base64.b64encode(response.read()).decode())
 
     async def _action(self, ctx: EventContext):
         msg = ctx.event.text_message
