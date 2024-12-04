@@ -63,8 +63,8 @@ class AzureTTS(BasePlugin):
                 return Plain("TTS罢工了！")
 
         speaker: str = self.config[character]['Speaker']
-        pitch: float = self.config[character]['Pitch']
-        rate: float = self.config[character]['Rate']
+        pitch: float = self.config[character].getfloat('Pitch')
+        rate: float = self.config[character].getfloat('Rate')
         headers = {
             'X-Microsoft-OutputFormat': 'riff-24khz-16bit-mono-pcm',
             'Ocp-Apim-Subscription-Key': api_key,
