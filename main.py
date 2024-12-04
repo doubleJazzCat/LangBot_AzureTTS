@@ -31,9 +31,9 @@ class AzureTTS(BasePlugin):
             config.read(config_file)
         else:
             self.ap.logger.debug(
-                f'未找到Azure配置文件，正在创建默认配置，需要手动输入API_Key，必要时修改URL')
+                f'未找到Azure配置文件，正在创建默认配置，需要手动输入API_Key，必要时修改服务区域Region')
             config['DEFAULT'] = {
-                'URL': 'https://eastus.tts.speech.microsoft.com/cognitiveservices/v1',
+                'Region': 'eastus',
                 'API_Key': '',
                 'Speaker': 'en-US-GuyNeural',
                 'Pitch': '0.00',
@@ -76,8 +76,9 @@ class AzureTTS(BasePlugin):
             """<prosody pitch="{pitch:+.2%}" rate="{rate:+.2%}">"""\{text}\
             </prosody></voice></speak>'.encode()
         try:
+            url = f"https://{self.config[character]['Region']}.tts.speech.microsoft.com/cognitiveservices/v1"
             request = urllib.request.Request(
-                self.config[character]['URL'], headers=headers, data=data)
+                url=url, headers=headers, data=data)
             response: urllib.response.addinfourl = await asyncio.to_thread(urllib.request.urlopen, request)
             if response.status != 200:
                 raise urllib.error.HTTPError(
@@ -91,7 +92,7 @@ class AzureTTS(BasePlugin):
         msg = ctx.event.text_message
         if m := self.KEYWORD.match(msg):  # 如果符合关键字
             args = m.groupdict()
-            character = args.get('speaker') or 'DEFAULT'
+            character = args.get('character') or 'DEFAULT'
 
             if character != 'DEFAULT' and character not in self.config.sections():
                 ctx.add_return("reply", [f"角色{repr(character)}不存在！请检查输入是否正确"])
