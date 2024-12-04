@@ -96,23 +96,28 @@ class AzureTTS(BasePlugin):
                 return f"角色{repr(character)}不存在！请检查输入是否正确"
             else:
                 return await self._call_api(character, text)
+        return None
 
     # 当收到个人或群消息时触发
     @handler(PersonNormalMessageReceived)
     @handler(GroupNormalMessageReceived)
     async def person_normal_message_received(self, ctx: EventContext):
-        ctx.add_return("reply", [await self._process(ctx.event.text_message)])
+        msg = ctx.event.text_message
+        if result := await self._process(msg):
+            ctx.add_return("reply", [result])
 
-        # 阻止该事件默认行为（向接口获取回复）
-        ctx.prevent_default()
+            # 阻止该事件默认行为（向接口获取回复）
+            ctx.prevent_default()
 
     # 当回复普通消息时触发
     @handler(NormalMessageResponded)
     async def normal_message_responded(self, ctx: EventContext):
-        ctx.add_return("addition", [await self._process(ctx.event.response_text)])
+        msg = ctx.event.response_text
+        if result := await self._process(msg):
+            ctx.add_return("addition", [result])
 
-        # 阻止该事件默认行为（向接口获取回复）（不知道是不是多余的）
-        ctx.prevent_default()
+            # 阻止该事件默认行为（向接口获取回复）（不知道是不是多余的）
+            ctx.prevent_default()
 
     # 插件卸载时触发
     def __del__(self):
