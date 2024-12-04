@@ -95,7 +95,7 @@ class AzureTTS(BasePlugin):
             if (character or 'DEFAULT') not in self.config.sections():
                 return f"角色{repr(character)}不存在！请检查输入是否正确"
             else:
-                content.add_return("reply", [await self._call_api(character, text)])
+                return await self._call_api(character, text)
 
     # 当收到个人或群消息时触发
     @handler(PersonNormalMessageReceived)
