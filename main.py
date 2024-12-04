@@ -88,12 +88,12 @@ class AzureTTS(BasePlugin):
             return Plain("TTS坏掉了！")
         return Voice(base64=base64.b64encode(response.read()).decode())
 
-    async def _process(self, msg: str):
-        if m := self.KEYWORD.match(msg):  # 如果符合关键字
-            character, text = m.groupdict().values()
+    async def _process(self, msg: str, *, match: bool = True):
+        if (m := self.KEYWORD.match(msg)) or not match:  # 如果符合关键字
+            character, text = m.groupdict().values() if m else (None, msg)
 
             if (character or 'DEFAULT') not in self.config.sections():
-                return f"角色{repr(character)}不存在！请检查输入是否正确"
+                return f"TTS角色{repr(character)}不存在！"
             else:
                 return await self._call_api(character, text)
         return None
@@ -113,7 +113,7 @@ class AzureTTS(BasePlugin):
     @handler(NormalMessageResponded)
     async def normal_message_responded(self, ctx: EventContext):
         msg = ctx.event.response_text
-        if result := await self._process(msg):
+        if result := await self._process(msg, match=False):
             ctx.add_return("addition", [result])
 
             # 阻止该事件默认行为（向接口获取回复）（不知道是不是多余的）
