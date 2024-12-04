@@ -15,8 +15,15 @@ from pkg.plugin.context import register, handler, BasePlugin, APIHost, EventCont
 @register(name="AzureTTS", description="AzureTTS service for LangBot", version="0.1", author="Ingnaryk")
 class AzureTTS(BasePlugin):
 
+    KEYWORD = re.compile(
+        r"tts\s+(?:-(?P<character>\w+)\s+)?(?P<text>.+)", re.DOTALL)
+
     # 插件加载时触发
     def __init__(self, host: APIHost):
+        asyncio.run(self.initialize())
+
+    # 异步初始化
+    async def initialize(self):
         config_file = path.Path('Azure_config.ini')
         config = configparser.ConfigParser()
 
@@ -41,16 +48,20 @@ class AzureTTS(BasePlugin):
             config.write(open(config_file, 'w'))
 
         self.config = config
-        self.keyword = re.compile(
-            r"tts\s+(?:-(?P<character>\w+)\s+)?(?P<text>.+)", re.DOTALL)
-
-    # 异步初始化
-    async def initialize(self):
-        pass
 
     # 具体调用Azure Service
     async def _call_api(self, character: str, text: str) -> MessageComponent:
         api_key: str = self.config[character]['API_Key']
+
+        # 如果api key为空则重新读取一遍配置
+        if not api_key:
+            await self.initialize()
+            api_key = self.config[character]['API_Key']
+            # 如果api key仍为空则报错
+            if not api_key:
+                self.ap.logger.error(f'未设置AzureTTS服务的api key！')
+                return Plain("TTS罢工了！")
+
         speaker: str = self.config[character]['Speaker']
         pitch: float = self.config[character]['Pitch']
         rate: float = self.config[character]['Rate']
