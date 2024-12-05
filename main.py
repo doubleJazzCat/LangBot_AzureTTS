@@ -113,11 +113,7 @@ class AzureTTS(BasePlugin):
     @handler(NormalMessageResponded)
     async def normal_message_responded(self, ctx: EventContext):
         msg = ctx.event.response_text
-        if result := await self._process(msg, match=False):
-            ctx.add_return("addition", [result])
-
-            # 阻止该事件默认行为（向接口获取回复）（不知道是不是多余的）
-            ctx.prevent_default()
+        ctx.add_return("addition", [await self._process(msg, match=False)])
 
     # 插件卸载时触发
     def __del__(self):
