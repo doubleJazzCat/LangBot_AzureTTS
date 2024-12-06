@@ -113,7 +113,7 @@ class AzureTTS(BasePlugin):
     @handler(NormalMessageResponded)
     async def normal_message_responded(self, ctx: EventContext):
         msg = ctx.event.response_text
-        ctx.add_return("addition", [await self._process(msg, match=False)])
+        ctx.add_return("addition", [msg, await self._process(msg, match=False)])
 
     # 插件卸载时触发
     def __del__(self):
