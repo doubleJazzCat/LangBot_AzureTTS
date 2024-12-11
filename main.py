@@ -88,9 +88,9 @@ class AzureTTS(BasePlugin):
             return Plain("TTS坏掉了！")
         return Voice(base64=base64.b64encode(response.read()).decode())
 
-    async def _process(self, msg: str, *, match: bool = True):
-        if (m := self.KEYWORD.match(msg)) or not match:  # 如果符合关键字
-            character, text = m.groupdict().values() if m else (None, msg)
+    async def _process(self, msg: str):
+        if m := self.KEYWORD.match(msg):  # 如果符合关键字
+            character, text = m.groupdict().values()
 
             if (character or 'DEFAULT') not in self.config.sections():
                 return f"TTS角色{repr(character)}不存在！"
@@ -113,7 +113,10 @@ class AzureTTS(BasePlugin):
     @handler(NormalMessageResponded)
     async def normal_message_responded(self, ctx: EventContext):
         msg = ctx.event.response_text
-        ctx.add_return("addition", [msg, await self._process(msg, match=False)])
+        target_type = ctx.event.launcher_type
+        target_id = ctx.event.launcher_id
+        # 强制语音发送
+        await ctx.send_message(target_type, target_id, MessageChain([await self._call_api('DEFAULT', msg)]))
 
     # 插件卸载时触发
     def __del__(self):
