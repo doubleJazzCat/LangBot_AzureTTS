@@ -17,21 +17,24 @@ class AzureTTS(BasePlugin):
 
     KEYWORD = re.compile(
         r"#tts\s+(?:-(?P<character>\w+)\s+)?(?P<text>.+)", re.DOTALL)
+    CONFIG_FILE = path.Path('Azure_config.ini')
 
     # 插件加载时触发
     def __init__(self, host: APIHost):
+        self._config_last_mtime: float = 0.
+
         asyncio.run_coroutine_threadsafe(self.initialize(), host.ap.event_loop)
 
     # 异步初始化
     async def initialize(self):
-        config_file = path.Path('Azure_config.ini')
         config = configparser.ConfigParser()
 
-        if config_file.exists():
-            config.read(config_file)
+        if self.CONFIG_FILE.exists():
+            config.read(self.CONFIG_FILE)
         else:
             self.ap.logger.debug(
                 f'未找到Azure配置文件，正在创建默认配置，需要手动输入API_Key，必要时修改服务区域Region')
+
             config['DEFAULT'] = {
                 'Region': 'eastus',
                 'API_Key': '',
@@ -45,22 +48,28 @@ class AzureTTS(BasePlugin):
                 'Pitch': '0.28',
                 'Rate': '0.05',
             }
-            config.write(open(config_file, 'w'))
+            config.write(open(self.CONFIG_FILE, 'w'))
 
+        self._config_last_mtime = self.CONFIG_FILE.mtime
         self.config = config
 
     # 具体调用Azure Service
-    async def _call_api(self, character: str, text: str) -> MessageComponent:
-        api_key: str = self.config[character]['API_Key']
+    async def _call_api(self, text: str, *, character: str = None) -> MessageComponent:
+        if character is None:
+            character = 'DEFAULT'
 
-        # 如果api key为空则重新读取一遍配置
-        if not api_key:
+        api_key: str = self.config[character]['API_Key']
+        config_mtime: float = self.CONFIG_FILE.mtime
+
+        # 如果api key为空（或配置文件有更新）则重新读取一遍配置
+        if not api_key or config_mtime != self._config_last_mtime:
             await self.initialize()
             api_key = self.config[character]['API_Key']
-            # 如果api key仍为空则报错
-            if not api_key:
-                self.ap.logger.error(f'未设置AzureTTS服务的api key！')
-                return Plain("TTS罢工了！")
+
+        # 如果api key为空则报错
+        if not api_key:
+            self.ap.logger.error(f'未设置AzureTTS服务的api key！')
+            return Plain("TTS配置异常！")
 
         speaker: str = self.config[character]['Speaker']
         pitch: float = self.config[character].getfloat('Pitch')
@@ -88,22 +97,19 @@ class AzureTTS(BasePlugin):
             return Plain("TTS坏掉了！")
         return Voice(base64=base64.b64encode(response.read()).decode())
 
-    async def _process(self, msg: str):
-        if m := self.KEYWORD.match(msg):  # 如果符合关键字
-            character, text = m.groupdict().values()
-
-            if (character or 'DEFAULT') not in self.config.sections():
-                return f"TTS角色{repr(character)}不存在！"
-            else:
-                return await self._call_api(character, text)
-        return None
-
     # 当收到个人或群消息时触发
     @handler(PersonNormalMessageReceived)
     @handler(GroupNormalMessageReceived)
     async def person_normal_message_received(self, ctx: EventContext):
         msg = ctx.event.text_message
-        if result := await self._process(msg):
+        if m := self.KEYWORD.match(msg):  # 如果符合关键字
+            character, text = m.groupdict().values()
+
+            if (character is not None) and (character not in self.config.sections()):
+                result = f"TTS角色{repr(character)}不存在！"
+            else:
+                result = await self._call_api(text, character=character)
+
             ctx.add_return("reply", [result])
 
             # 阻止该事件默认行为（向接口获取回复）
@@ -116,7 +122,7 @@ class AzureTTS(BasePlugin):
         target_type = ctx.event.launcher_type
         target_id = ctx.event.launcher_id
         # 强制语音发送
-        await ctx.send_message(target_type, target_id, MessageChain([await self._call_api('DEFAULT', msg)]))
+        await ctx.send_message(target_type, target_id, MessageChain([await self._call_api(msg)]))
 
     # 插件卸载时触发
     def __del__(self):
