@@ -82,7 +82,7 @@ class AzureTTS(BasePlugin):
         }
         data = f'<speak version="1.0" xmlns="https://www.w3.org/2001/10/synthesis" xml:lang="en-US">\
             <voice name="{speaker}">\
-            """<prosody pitch="{pitch:+.2%}" rate="{rate:+.2%}">"""\{text}\
+            """<prosody pitch="{pitch:+.2%}" rate="{rate:+.2%}">"""{text}\
             </prosody></voice></speak>'.encode()
         try:
             url = f"https://{self.config[character]['Region']}.tts.speech.microsoft.com/cognitiveservices/v1"
