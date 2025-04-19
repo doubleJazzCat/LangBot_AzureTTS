@@ -41,6 +41,9 @@ class AzureTTS(BasePlugin):
                 'Speaker': 'en-US-GuyNeural',
                 'Pitch': '0.00',
                 'Rate': '0.00',
+                'Volume': '0.00',
+                'Style': 'default',
+                'Styledegree': '1.0',
             }
             # 自定义角色样例
             config['neuro'] = {
@@ -74,16 +77,27 @@ class AzureTTS(BasePlugin):
         speaker: str = self.config[character]['Speaker']
         pitch: float = self.config[character].getfloat('Pitch')
         rate: float = self.config[character].getfloat('Rate')
+        volume: float = self.config[character].getfloat('Volume')
+        style: str = self.config[character]['Style']
+        styledegree: float = self.config[character].getfloat('Styledegree')
+        
         headers = {
             'X-Microsoft-OutputFormat': 'riff-24khz-16bit-mono-pcm',
             'Ocp-Apim-Subscription-Key': api_key,
             'Content-Type': 'application/ssml+xml',
             'Connection': 'Keep-Alive'
         }
-        data = f'<speak version="1.0" xmlns="https://www.w3.org/2001/10/synthesis" xml:lang="en-US">\
-            <voice name="{speaker}">\
-            """<prosody pitch="{pitch:+.2%}" rate="{rate:+.2%}">"""{text}\
-            </prosody></voice></speak>'.encode()
+        data = f"""
+        <speak xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" xmlns:emo="http://www.w3.org/2009/10/emotionml" version="1.0" xml:lang="zh-CN">
+            <voice name="{speaker}">
+                <mstts:express-as style="{style}" styledegree="{styledegree:+.1%}">
+                    <prosody rate="{rate:+.2%}" volume="{volume:+.2%}" pitch="{pitch:+.2%}">
+                        {text}
+                    </prosody>
+                </mstts:express-as>
+            </voice>
+        </speak>
+        """.encode()
         try:
             url = f"https://{self.config[character]['Region']}.tts.speech.microsoft.com/cognitiveservices/v1"
             request = urllib.request.Request(
