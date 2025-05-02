@@ -53,7 +53,7 @@ class AzureTTS(BasePlugin):
             }
             config.write(open(self.CONFIG_FILE, 'w'))
 
-        self._config_last_mtime = self.CONFIG_FILE.mtime
+        self._config_last_mtime = self.CONFIG_FILE.stat().st_mtime
         self.config = config
 
     # 具体调用Azure Service
@@ -62,7 +62,7 @@ class AzureTTS(BasePlugin):
             character = 'DEFAULT'
 
         api_key: str = self.config[character]['API_Key']
-        config_mtime: float = self.CONFIG_FILE.mtime
+        config_mtime: float = self.CONFIG_FILE.stat().st_mtime
 
         # 如果api key为空（或配置文件有更新）则重新读取一遍配置
         if not api_key or config_mtime != self._config_last_mtime:
