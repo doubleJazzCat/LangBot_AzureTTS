@@ -1,11 +1,11 @@
 import re
-import path
 import base64
 import asyncio
 import configparser
 import urllib.error
 import urllib.request
 import urllib.response
+from pathlib import Path
 from pkg.plugin.events import *
 from pkg.platform.types import *
 from pkg.plugin.context import register, handler, BasePlugin, APIHost, EventContext
@@ -17,7 +17,7 @@ class AzureTTS(BasePlugin):
 
     KEYWORD = re.compile(
         r"#tts\s+(?:-(?P<character>\w+)\s+)?(?P<text>.+)", re.DOTALL)
-    CONFIG_FILE = path.Path('plugins/LangBot_AzureTTS/Azure_config.ini')
+    CONFIG_FILE = Path('plugins/LangBot_AzureTTS/Azure_config.ini')
 
     # 插件加载时触发
     def __init__(self, host: APIHost):
